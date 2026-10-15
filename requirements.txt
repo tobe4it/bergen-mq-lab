@@ -1,0 +1,4 @@
+ansible-core>=2.19,<2.22
+cryptography>=45,<47
+PyYAML>=6,<7
+

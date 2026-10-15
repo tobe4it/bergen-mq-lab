@@ -1,0 +1,21 @@
+---
+all:
+  children:
+    controllers:
+      hosts:
+        mq-controller:
+          ansible_connection: local
+
+    proxmox_hosts:
+      hosts:
+        pve-node:
+          ansible_host: 192.0.2.10
+          ansible_user: root
+          ansible_python_interpreter: /usr/bin/python3
+
+    mq_lab_nodes:
+      hosts: {}
+
+    mq_client_nodes:
+      hosts: {}
+

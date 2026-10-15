@@ -1,0 +1,8 @@
+---
+remote_syslog_enabled: false
+remote_syslog_server: "CHANGE_ME"
+remote_syslog_port: 514
+remote_syslog_protocol: "tcp"
+remote_syslog_config_path: "/etc/rsyslog.d/90-bergen-remote.conf"
+remote_syslog_queue_size: 10000
+remote_syslog_send_test: true

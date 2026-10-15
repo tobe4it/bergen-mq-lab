@@ -1,0 +1,22 @@
+---
+# Copy to inventory.local.yml and replace documentation addresses locally.
+all:
+  children:
+    mq_lab_nodes:
+      hosts:
+        bergen-mq-lab:
+          ansible_host: 192.0.2.20
+          ansible_user: root
+          ansible_python_interpreter: /usr/bin/python3
+        bergen-mq-lab-b:
+          ansible_host: 192.0.2.21
+          ansible_user: root
+          ansible_python_interpreter: /usr/bin/python3
+
+    mq_client_nodes:
+      hosts:
+        bergen-mq-client:
+          ansible_host: 192.0.2.22
+          ansible_user: root
+          ansible_python_interpreter: /usr/bin/python3
+

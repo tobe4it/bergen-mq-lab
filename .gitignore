@@ -1,0 +1,15 @@
+.venv/
+*.retry
+__pycache__/
+*.pyc
+
+ansible/inventory.yml
+ansible/inventory.local.yml
+ansible/group_vars/all/vault.yml
+ansible/group_vars/all/bergen-mq-lab.yml
+ansible/vars/mq.local.yml
+ansible/vars/mq-lab.local.yml
+ansible/vars/bergen-mq-*.local.yml
+ansible/vars/mq-topology/
+ansible/reports/
+

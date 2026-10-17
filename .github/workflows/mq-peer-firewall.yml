@@ -1,0 +1,20 @@
+name: MQ peer firewall contract
+on:
+  pull_request:
+    paths:
+      - 'ansible/roles/mq_lab/tasks/firewall.yml'
+      - 'ansible/roles/mq_lab/defaults/main.yml'
+      - 'tests/test_mq_peer_firewall.py'
+      - '.github/workflows/mq-peer-firewall.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pyyaml
+      - run: python -m unittest discover -s tests -p 'test_mq_peer_firewall.py' -v

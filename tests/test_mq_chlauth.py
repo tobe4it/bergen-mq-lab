@@ -22,9 +22,9 @@ class ChlauthPlanTests(unittest.TestCase):
     def test_receivers_map_opposite_peer_exactly(self):
         a, b = self.plan["a"], self.plan["b"]
         self.assertEqual((a["receiver"], a["mcauser"], a["peer_ip"]),
-                         ("AUDIT.A1B2C3D.B2A", "bgttransa", "192.0.2.20"))
+                         ("AUDIT.A1B2C3D.B2A", "bgttransa", "192.0.2.156"))
         self.assertEqual((b["receiver"], b["mcauser"], b["peer_ip"]),
-                         ("AUDIT.A1B2C3D.A2B", "bgttransb", "192.0.2.20"))
+                         ("AUDIT.A1B2C3D.A2B", "bgttransb", "192.0.2.212"))
         self.assertIn("SSLCAUTH(REQUIRED)", a["define_receiver"])
         self.assertIn("MCAUSER(\'bgttransa\')", a["define_receiver"])
         self.assertIn("MCAUSER(\'bgttransb\')", b["define_receiver"])
@@ -82,7 +82,7 @@ class ChlauthPlanTests(unittest.TestCase):
     def test_changed_peer_ip_and_unknown_qmgr_rejected(self):
         for side in ("a", "b"):
             changed = copy.deepcopy(nodes())
-            changed[side]["host"] = "192.0.2.20"
+            changed[side]["host"] = "192.0.2.1"
             with self.assertRaises(ChlauthPlanError):
                 make_plan("AUDIT.A1B2C3D", changed)
             changed = copy.deepcopy(nodes())

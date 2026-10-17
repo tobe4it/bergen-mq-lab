@@ -1,0 +1,31 @@
+name: MQ CHLAUTH and OAM offline regressions
+on:
+  pull_request:
+    paths:
+      - 'ansible/module_utils/bergen_mq_chlauth*.py'
+      - 'ansible/library/mq_chlauth*.py'
+      - 'ansible/playbooks/mq-transport-chlauth*.yml'
+      - 'ansible/playbooks/mq-transport-chstatus*.yml'
+      - 'ansible/playbooks/mq-transport-ldap*.yml'
+      - 'ansible/playbooks/mq-transport-oam*.yml'
+      - 'tests/test_mq_chlauth*.py'
+      - '.github/workflows/mq-chlauth-oam.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install offline test dependencies
+        run: python -m pip install ansible-core pyyaml jinja2
+      - name: CHLAUTH/OAM negative contracts and journal tests
+        run: PYTHONPATH=ansible python -m unittest discover -s tests -p 'test_mq_chlauth*.py' -v
+      - name: Ansible syntax of all review-stage playbooks
+        run: |
+          for f in ansible/playbooks/mq-transport-chlauth*.yml ansible/playbooks/mq-transport-chstatus*.yml ansible/playbooks/mq-transport-ldap*.yml ansible/playbooks/mq-transport-oam*.yml; do
+            ansible-playbook -i localhost, --syntax-check "$f"
+          done

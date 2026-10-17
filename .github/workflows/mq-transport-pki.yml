@@ -1,0 +1,30 @@
+name: MQ transport PKI offline safety
+on:
+  pull_request:
+    paths:
+      - 'ansible/playbooks/mq-transport-pki-*.yml'
+      - 'ansible/roles/mq_lab/templates/bergen-mq-lab.container.j2'
+      - 'tests/test_mq_transport_pki_safety.py'
+      - '.github/workflows/mq-transport-pki.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ansible/playbooks/mq-transport-pki-*.yml'
+      - 'ansible/roles/mq_lab/templates/bergen-mq-lab.container.j2'
+      - 'tests/test_mq_transport_pki_safety.py'
+      - '.github/workflows/mq-transport-pki.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pyyaml jinja2 ansible-core
+      - run: python -m unittest discover -s tests -p 'test_mq_transport_pki_safety.py' -v
+      - run: |
+          ansible-playbook -i localhost, --syntax-check ansible/playbooks/mq-transport-pki-prepare.yml
+          ansible-playbook -i localhost, --syntax-check ansible/playbooks/mq-transport-pki-activate.yml

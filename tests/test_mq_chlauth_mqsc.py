@@ -78,7 +78,7 @@ class MqscEvidenceTests(unittest.TestCase):
             dict(ALLOW, MCAUSER="mqm"),
             dict(ALLOW, SSLCERTI="CN=Untrusted"),
             dict(ALLOW, SSLPEER="CN=Unknown"),
-            dict(ALLOW, ADDRESS="192.0.2.20"),
+            dict(ALLOW, ADDRESS="192.0.2.42"),
             dict(ALLOW, USERSRC="CHANNEL"),
             dict(ALLOW, WARN="YES"),
         ):

@@ -1,0 +1,25 @@
+name: MQ ephemeral mTLS offline regression
+on:
+  pull_request:
+    paths:
+      - 'ansible/module_utils/bergen_mq*.py'
+      - 'ansible/library/mq_topology_audit.py'
+      - 'ansible/playbooks/mq-topology-audit.yml'
+      - 'tests/test_mq_transport.py'
+      - 'tests/test_mq_topology.py'
+      - '.github/workflows/mq-ephemeral-mtls.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ansible-core pyyaml jinja2
+      - run: python -m unittest discover -s tests -p 'test_mq_transport.py' -v
+      - run: python -m unittest discover -s tests -p 'test_mq_topology.py' -v
+      - run: python -m unittest discover -s tests -p 'test_mq.py' -v
+      - run: ansible-playbook -i localhost, --syntax-check ansible/playbooks/mq-topology-audit.yml

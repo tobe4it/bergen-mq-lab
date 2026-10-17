@@ -17,9 +17,9 @@ CERTLABL = "bergentransport"
 # Verified lab configuration; a topology change requires a code review rather
 # than silently granting an unexpected IP / queue manager an identity.
 LAB = {
-    "a": {"qmgr": "BERGENLAB", "host": "192.0.2.20",
+    "a": {"qmgr": "BERGENLAB", "host": "192.0.2.212",
           "transport_user": "bgttransa", "group": "MQBGTTRANSA"},
-    "b": {"qmgr": "BERGENLABB", "host": "192.0.2.20",
+    "b": {"qmgr": "BERGENLABB", "host": "192.0.2.156",
           "transport_user": "bgttransb", "group": "MQBGTTRANSB"},
 }
 SUBJECT = {"a": "CN=bergen-mq-lab transport",

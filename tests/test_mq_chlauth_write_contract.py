@@ -27,7 +27,7 @@ class WriteContractTests(unittest.TestCase):
             for field, value in (
                 ("mcauser", "mqm"),
                 ("receiver", "BGT.CLIENT"),
-                ("peer_ip", "192.0.2.20"),
+                ("peer_ip", "192.0.2.1"),
                 ("peer_subject", "CN=Unknown"),
             ):
                 invalid = copy.deepcopy(self.plan)

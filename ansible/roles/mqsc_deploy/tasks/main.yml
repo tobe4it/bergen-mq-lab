@@ -1,0 +1,67 @@
+---
+- name: Require explicitly scoped MQSC execution
+  ansible.builtin.assert:
+    that:
+      - mqsc_mode in ['audit', 'validate', 'apply']
+      - mqsc_platform in ['linux', 'aix', 'windows']
+      - mqsc_qmgr | length > 0
+      - mqsc_qmgr is match('^[A-Za-z0-9_.%/-]{1,48}$')
+      - mqsc_change_id is match('^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$')
+      - mqsc_source | length > 0
+      - mqsc_source | basename is match('^[A-Za-z0-9][A-Za-z0-9_.-]*[.]mqsc$')
+      - (mqsc_mode != 'apply') or (mqsc_confirm_apply | bool)
+      - (mqsc_mode != 'apply') or (not ansible_check_mode)
+      - (mqsc_platform != 'windows') or (not mqsc_become | bool)
+    fail_msg: "Invalid target/change or apply gate; Windows uses its configured connection identity."
+    quiet: true
+
+- name: Inspect MQSC source on controller
+  ansible.builtin.stat:
+    path: "{{ mqsc_source }}"
+    checksum_algorithm: sha256
+  delegate_to: localhost
+  become: false
+  register: mqsc_source_stat
+
+- name: Require regular MQSC input file
+  ansible.builtin.assert:
+    that:
+      - mqsc_source_stat.stat.exists
+      - mqsc_source_stat.stat.isreg
+      - mqsc_source_stat.stat.size > 0
+      - mqsc_source_stat.stat.size <= 1048576
+    fail_msg: "MQSC file missing, empty or larger than 1 MiB."
+
+- name: Set target execution parameters
+  ansible.builtin.set_fact:
+    mqsc_effective_runmqsc: "{{ mqsc_runmqsc if mqsc_runmqsc | length > 0 else (('C:\\Program Files\\IBM\\MQ\\bin\\runmqsc.exe') if mqsc_platform == 'windows' else ('/usr/mqm/bin/runmqsc' if mqsc_platform == 'aix' else '/opt/mqm/bin/runmqsc')) }}"
+    mqsc_remote_file: "{{ (mqsc_windows_stage_dir ~ '\\' if mqsc_platform == 'windows' else mqsc_posix_stage_dir ~ '/') ~ mqsc_change_id ~ '.mqsc' }}"
+
+- name: Execute platform-specific MQSC workflow
+  ansible.builtin.include_tasks: "{{ 'windows.yml' if mqsc_platform == 'windows' else 'posix.yml' }}"
+
+- name: Ensure local evidence directory exists
+  ansible.builtin.file:
+    path: "{{ mqsc_report_dir }}"
+    state: directory
+    mode: '0700'
+  delegate_to: localhost
+  become: false
+
+- name: Record MQSC invocation and complete result on controller
+  ansible.builtin.copy:
+    dest: "{{ mqsc_report_dir }}/{{ inventory_hostname }}-{{ mqsc_change_id }}-{{ mqsc_mode }}.json"
+    mode: '0600'
+    content: "{{ {'change_id': mqsc_change_id, 'host': inventory_hostname, 'qmgr': mqsc_qmgr, 'platform': mqsc_platform, 'mode': mqsc_mode, 'source_sha256': mqsc_source_stat.stat.checksum, 'runmqsc_rc': (mqsc_execution.rc | default(None)), 'stdout': (mqsc_execution.stdout | default('')), 'stderr': (mqsc_execution.stderr | default('')), 'success': mqsc_execution_ok | bool} | to_nice_json }}\n"
+  delegate_to: localhost
+  become: false
+  check_mode: false
+
+- name: Reject MQSC errors after evidence has been saved
+  ansible.builtin.assert:
+    that: [mqsc_execution_ok | bool]
+    fail_msg: "MQSC verification/execution failed; review the protected evidence JSON. Partial changes may exist; do not retry blindly."
+
+- name: Show MQSC result
+  ansible.builtin.debug:
+    msg: "MQSC {{ mqsc_mode }} succeeded for {{ mqsc_qmgr }} on {{ inventory_hostname }} (SHA256 {{ mqsc_source_stat.stat.checksum }})."

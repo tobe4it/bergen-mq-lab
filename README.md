@@ -17,6 +17,7 @@ license gate or deploying an IBM MQ image.
 - Reconcile a bounded set of MQ objects through the administrative REST API.
 - Exercise local messaging, authentication and two-QMgr topology checks.
 - Produce guarded, sanitized audit evidence.
+- Deploy MQSC files independently to existing host-native IBM MQ on GNU/Linux, AIX and Windows (no MQ installation performed); see [MQSC deployment](docs/MQSC-DEPLOY.md).
 
 No IBM MQ image, MQ client library, credential, private key, certificate
 private key or site-local inventory is stored in Git.

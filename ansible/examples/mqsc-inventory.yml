@@ -1,0 +1,29 @@
+---
+# Example only. Copy to a site-local, Git-ignored inventory.
+all:
+  children:
+    mqsc_targets:
+      hosts:
+        linux-mq:
+          ansible_host: linux-mq.example.net
+          ansible_user: mqdeploy
+          mqsc_platform: linux
+          mqsc_qmgr: QM01
+          mqsc_runmqsc: /opt/mqm/bin/runmqsc
+          mqsc_become: true
+          mqsc_become_user: mqm
+        aix-mq:
+          ansible_host: aix-mq.example.net
+          ansible_user: mqdeploy
+          mqsc_platform: aix
+          mqsc_qmgr: QM02
+          mqsc_runmqsc: /usr/mqm/bin/runmqsc
+          mqsc_become: true
+          mqsc_become_user: mqm
+        windows-mq:
+          ansible_host: windows-mq.example.net
+          ansible_connection: winrm
+          ansible_user: MQDEPLOY
+          mqsc_platform: windows
+          mqsc_qmgr: QM03
+          mqsc_runmqsc: 'C:\Program Files\IBM\MQ\bin\runmqsc.exe'

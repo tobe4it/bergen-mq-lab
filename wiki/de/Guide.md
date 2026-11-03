@@ -53,6 +53,8 @@ Das Playbook `ansible/playbooks/mqsc-deploy.yml` zuerst mit `mqsc_mode=audit`, a
 
 `audit` prüft nur das Programm; `validate` prüft mit `runmqsc -v` die Syntax, nicht Objekte oder Berechtigungen. MQSC ist nicht transaktional. Teiländerungen und Protokolle prüfen; automatische Rücknahme, Doppel-Ausführungssperre und Queue-Manager-Lock fehlen. Windows-Staging-ACLs müssen standortspezifisch eingeschränkt werden.
 
+**IBM-MQ-Versionsumfang:** IBM MQ 9.2, 9.3, 9.4 und 10.0 (einschließlich MQ 10.0 LTS und 10.0.1 CD) sind Zielversionen der Architektur, keine bereits vollständig getestete Kompatibilitätsmatrix. Vor Freigaben die tatsächlich installierte Version, MQSC-Syntax, Berechtigungen und den Ausführungsadapter je Betriebssystem prüfen. Siehe `docs/MQSC-DEPLOY.md`.
+
 ## 7. Deklarative Objektverwaltung
 
 Das Modul `ansible/library/mq_objects.py` gleicht einen begrenzten Satz von Queue-, Channel-, Topic- und Namelist-Attributen per HTTPS mit dem Istzustand ab. Nicht deklarierte Objekte werden nicht automatisch gelöscht. Check Mode und Diff gelten nur für diesen abgegrenzten Funktionsumfang.

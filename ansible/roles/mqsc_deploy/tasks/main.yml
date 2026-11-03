@@ -3,6 +3,8 @@
   ansible.builtin.assert:
     that:
       - mqsc_mode in ['audit', 'validate', 'apply']
+      - ansible_play_hosts_all | length == 1
+      - (mqsc_mode == 'audit') or (not ansible_check_mode)
       - mqsc_platform in ['linux', 'aix', 'windows']
       - mqsc_qmgr | length > 0
       - mqsc_qmgr is match('^[A-Za-z0-9_.%/-]{1,48}$')

@@ -6,6 +6,27 @@ managers. It uses an existing local IBM MQ installation on each target and the n
 DELETE/DEFINE or other MQSC statements in source order. MQSC is **not transactional**;
 an unsuccessful deployment may have applied preceding commands.
 
+## IBM MQ version coverage
+
+The deployment architecture explicitly targets IBM MQ **9.2, 9.3, 9.4 and
+10.0**, including applicable LTS and Continuous Delivery maintenance levels.
+IBM MQ 10.0 LTS became available in June 2026 and MQ 10.0.1 CD in October
+2026. This is an architectural scope statement, **not a claim that the
+adapter has passed live compatibility tests** for these releases.
+
+Select the correct host-native MQ installation and `runmqsc` binary for
+each queue manager. Detect and record the actual MQ version and platform as
+part of target acceptance; do not infer the running version from the declared
+inventory label alone. Validate the particular MQSC attributes and commands
+against that release. Run `audit`, `validate`, an approved disposable
+end-to-end apply test, and error/partial-execution tests before certifying a
+version/platform combination. Do not automatically upgrade older managers.
+
+IBM references:
+- [MQ 10.0 MQSC administration](https://www.ibm.com/docs/en/ibm-mq/10.0.x?topic=administering-mq-using-mqsc-commands)
+- [MQ 10.0 changes](https://www.ibm.com/docs/en/ibm-mq/10.0.x?topic=1000-whats-changed-in-mq)
+- [MQ 10.0 LTS fix list](https://www.ibm.com/support/pages/fix-list-ibm-mq-100-lts)
+
 ## Prerequisites
 
 Install Ansible and `ansible.windows` on the controller, configure SSH for Linux

@@ -53,6 +53,8 @@ Run `ansible/playbooks/mqsc-deploy.yml` with `mqsc_mode=audit` first, then `mqsc
 
 `audit` checks for the executable only; `validate` uses `runmqsc -v` for syntax checks, not semantic or authority validation. MQSC changes are not transactional. Review full output and partial results; no automatic rollback, duplicate prevention or queue-manager lock is implemented. Protect Windows staging ACLs yourself.
 
+**IBM MQ version scope:** IBM MQ 9.2, 9.3, 9.4 and 10.0 (including MQ 10.0 LTS and 10.0.1 CD) are architectural targets, not a claim of completed compatibility tests. Verify the exact installed version, MQSC syntax, authorities and runtime adapter on each operating system before approving changes. See `docs/MQSC-DEPLOY.md`.
+
 ## 7. Declarative object administration
 
 `ansible/library/mq_objects.py` and the REST reconciler manage a bounded set of queue, channel, topic and namelist attributes using HTTPS and real-state comparison. Missing YAML declarations are not pruned. Check mode and diff are supported for that bounded model.

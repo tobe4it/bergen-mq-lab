@@ -1,0 +1,59 @@
+---
+---
+- name: Check runmqsc.exe on Windows host
+  ansible.windows.win_stat:
+    path: "{{ mqsc_effective_runmqsc }}"
+  register: mqsc_binary
+
+- name: Require existing IBM MQ installation
+  ansible.builtin.assert:
+    that: [mqsc_binary.stat.exists]
+    fail_msg: "runmqsc.exe not found; specify mqsc_runmqsc for the installed MQ version."
+
+- name: Stage and validate or apply Windows MQSC
+  when: mqsc_mode != 'audit'
+  block:
+    - name: Create Windows MQSC staging directory
+      ansible.windows.win_file:
+        path: "{{ mqsc_windows_stage_dir }}"
+        state: directory
+
+    - name: Copy MQSC content unchanged
+      ansible.windows.win_copy:
+        src: "{{ mqsc_source }}"
+        dest: "{{ mqsc_remote_file }}"
+
+    - name: Validate MQSC syntax on Windows
+      ansible.windows.win_command:
+        argv:
+          - "{{ mqsc_effective_runmqsc }}"
+          - -v
+          - -f
+          - "{{ mqsc_remote_file }}"
+          - "{{ mqsc_qmgr }}"
+      register: mqsc_validation
+      changed_when: false
+      failed_when: false
+
+    - name: Evaluate Windows syntax validation
+      ansible.builtin.set_fact:
+        mqsc_validation_ok: "{{ (mqsc_validation.rc == 0) and not ((mqsc_validation.stdout ~ '\\n' ~ mqsc_validation.stderr) is search('AMQ[0-9]{4}[ES]\\b')) }}"
+
+    - name: Apply MQSC on Windows after validation and approval
+      ansible.windows.win_command:
+        argv:
+          - "{{ mqsc_effective_runmqsc }}"
+          - -f
+          - "{{ mqsc_remote_file }}"
+          - "{{ mqsc_qmgr }}"
+      register: mqsc_apply_result
+      changed_when: true
+      failed_when: false
+      when:
+        - mqsc_mode == 'apply'
+        - mqsc_validation_ok | bool
+
+- name: Consolidate Windows outcome
+  ansible.builtin.set_fact:
+    mqsc_execution: "{{ (mqsc_apply_result if (mqsc_mode == 'apply' and mqsc_validation_ok | default(false) | bool) else mqsc_validation) if mqsc_mode != 'audit' else {'rc': 0, 'stdout': 'Executable found; no file staged or commands run.', 'stderr': ''} }}"
+    mqsc_execution_ok: "{{ (mqsc_mode == 'audit') or ((mqsc_validation_ok | default(false) | bool) and ((mqsc_mode != 'apply') or ((mqsc_apply_result.rc | default(1)) == 0 and not ((mqsc_apply_result.stdout | default('') ~ '\\n' ~ mqsc_apply_result.stderr | default('')) is search('AMQ[0-9]{4}[ES]\\b'))))) }}"

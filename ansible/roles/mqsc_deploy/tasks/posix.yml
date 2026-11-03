@@ -1,0 +1,72 @@
+---
+- name: Check MQSC executable on POSIX host
+  ansible.builtin.stat:
+    path: "{{ mqsc_effective_runmqsc }}"
+  register: mqsc_binary
+  become: "{{ mqsc_become | bool }}"
+  become_user: "{{ mqsc_become_user }}"
+
+- name: Require MQ installation and executable
+  ansible.builtin.assert:
+    that:
+      - mqsc_binary.stat.exists
+      - mqsc_binary.stat.executable | default(false)
+    fail_msg: "runmqsc missing/not executable: set mqsc_runmqsc for the correct IBM MQ installation."
+
+- name: Stage and validate or apply POSIX MQSC
+  when: mqsc_mode != 'audit'
+  block:
+    - name: Create protected MQSC staging directory
+      ansible.builtin.file:
+        path: "{{ mqsc_posix_stage_dir }}"
+        state: directory
+        mode: '0700'
+      become: "{{ mqsc_become | bool }}"
+      become_user: "{{ mqsc_become_user }}"
+
+    - name: Copy MQSC to destination without editing contents
+      ansible.builtin.copy:
+        src: "{{ mqsc_source }}"
+        dest: "{{ mqsc_remote_file }}"
+        mode: '0600'
+      become: "{{ mqsc_become | bool }}"
+      become_user: "{{ mqsc_become_user }}"
+
+    - name: Validate MQSC syntax
+      ansible.builtin.command:
+        argv:
+          - "{{ mqsc_effective_runmqsc }}"
+          - -v
+          - -f
+          - "{{ mqsc_remote_file }}"
+          - "{{ mqsc_qmgr }}"
+      become: "{{ mqsc_become | bool }}"
+      become_user: "{{ mqsc_become_user }}"
+      changed_when: false
+      failed_when: false
+      register: mqsc_validation
+
+    - name: Evaluate syntax validation output
+      ansible.builtin.set_fact:
+        mqsc_validation_ok: "{{ (mqsc_validation.rc == 0) and not ((mqsc_validation.stdout ~ '\\n' ~ mqsc_validation.stderr) is search('AMQ[0-9]{4}[ES]\\b')) }}"
+
+    - name: Apply MQSC only after successful validation and explicit approval
+      ansible.builtin.command:
+        argv:
+          - "{{ mqsc_effective_runmqsc }}"
+          - -f
+          - "{{ mqsc_remote_file }}"
+          - "{{ mqsc_qmgr }}"
+      become: "{{ mqsc_become | bool }}"
+      become_user: "{{ mqsc_become_user }}"
+      changed_when: true
+      failed_when: false
+      register: mqsc_apply_result
+      when:
+        - mqsc_mode == 'apply'
+        - mqsc_validation_ok | bool
+
+- name: Consolidate POSIX outcome
+  ansible.builtin.set_fact:
+    mqsc_execution: "{{ (mqsc_apply_result if (mqsc_mode == 'apply' and mqsc_validation_ok | default(false) | bool) else mqsc_validation) if mqsc_mode != 'audit' else {'rc': 0, 'stdout': 'Executable found; no file staged or commands run.', 'stderr': ''} }}"
+    mqsc_execution_ok: "{{ (mqsc_mode == 'audit') or ((mqsc_validation_ok | default(false) | bool) and ((mqsc_mode != 'apply') or ((mqsc_apply_result.rc | default(1)) == 0 and not ((mqsc_apply_result.stdout | default('') ~ '\\n' ~ mqsc_apply_result.stderr | default('')) is search('AMQ[0-9]{4}[ES]\\b'))))) }}"

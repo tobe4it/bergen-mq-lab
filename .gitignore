@@ -13,3 +13,4 @@ ansible/vars/bergen-mq-*.local.yml
 ansible/vars/mq-topology/
 ansible/reports/
 
+ansible/inventory.mqsc.local.yml

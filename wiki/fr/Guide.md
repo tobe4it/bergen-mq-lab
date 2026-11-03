@@ -1,6 +1,6 @@
 # Bergen MQ Lab — Guide d'exploitation et de référence
 
-> Ce guide décrit le laboratoire d'évaluation et l'adaptateur MQSC autonome. Le laboratoire n'est pas homologué pour la production. L'adaptateur cible des installations IBM MQ natives existantes et ne remplace ni l'approbation du changement ni les essais de compatibilité.
+> Ce guide couvre le laboratoire d'évaluation et le flux MQSC autonome pour des gestionnaires IBM MQ existants, natifs ou conteneurisés. Qualifier l'environnement cible avant toute utilisation réelle.
 
 ## Contents
 
@@ -27,7 +27,7 @@ Le fichier README sert de point de départ. Les références détaillées se tro
 
 Le contrôleur orchestre les invités Proxmox via SSH et Ansible. Les conteneurs MQ conservent les données persistantes hors du conteneur et proposent une interface d'administration HTTPS authentifiée. Le deuxième gestionnaire et le client Java sont isolés ; les règles de pare-feu restent à examiner séparément.
 
-L'adaptateur MQSC utilise SSH sous GNU/Linux/AIX ou WinRM/PSRP sous Windows, transfère un fichier MQSC sur la cible et exécute le programme `runmqsc` de l'installation sélectionnée.
+Le contrôleur MQSC utilise SSH sous GNU/Linux et AIX, ou WinRM/PSRP sous Windows. Pour les conteneurs Linux, il appelle le moteur Podman ou Docker configuré sur l'hôte cible.
 
 ## 3. Prérequis
 
@@ -45,15 +45,22 @@ Ne pas relancer le premier déploiement sur un invité inconnu. Vérifier l'unic
 
 Conserver les adresses, VMID, points TLS, noms des gestionnaires et identifiants hors de Git. Les exemples se trouvent dans `ansible/examples/`, `ansible/vars/` et `ansible/group_vars/`. Contrôler la cible avant chaque opération.
 
-Pour MQSC, définir `mqsc_platform`, `mqsc_qmgr`, si nécessaire `mqsc_runmqsc`, puis `mqsc_source` et un `mqsc_change_id` unique. Sélectionner exactement un hôte par exécution.
+Copier l'inventaire d'exemple dans `ansible/inventory.mqsc.local.yml`. Définir un alias par gestionnaire dans `mqsc_targets` avec la connexion, `mqsc_qmgr`, `mqsc_platform` et, selon le cas, `mqsc_installation`, `mqsc_runtime` et `mqsc_container`.
 
 ## 6. Déploiement MQSC
 
-Exécuter `ansible/playbooks/mqsc-deploy.yml` avec `mqsc_mode=audit`, puis `mqsc_mode=validate`, puis seulement après validation avec `mqsc_mode=apply -e mqsc_confirm_apply=true`. Le fichier peut contenir DEFINE, DELETE, ALTER et d'autres commandes MQSC valides, exécutées dans leur ordre d'apparition.
+Pour une seule cible, utiliser `mqsc/<alias>/C########.mqsc`. Pour plusieurs cibles, lister les alias dans `mqsc/changes/C########.yml`. Un fichier MQSC partagé du même identifiant peut être combiné avec des fichiers propres aux cibles. Le fichier propre à la cible est prioritaire.
 
-`audit` vérifie uniquement l'exécutable ; `validate` utilise `runmqsc -v` pour contrôler la syntaxe, pas les objets ni les droits. MQSC n'est pas transactionnel. Examiner les changements partiels ; pas de rollback automatique, de registre anti-doublon ni de verrou de gestionnaire. Les ACL du répertoire Windows doivent être restreintes localement.
+~~~sh
+python3 tools/mqsc_change.py C00000001 -i ansible/inventory.mqsc.local.yml --target linux-mq
+python3 tools/mqsc_change.py C00000002 -i ansible/inventory.mqsc.local.yml --mode validate
+python3 tools/mqsc_change.py C00000002 -i ansible/inventory.mqsc.local.yml --mode apply \
+  --approve-sha256 "$REVIEWED_PLAN_SHA256" --approval-ref CHG-123
+~~~
 
-**Versions IBM MQ ciblées :** IBM MQ 9.2, 9.3, 9.4 et 10.0 (y compris MQ 10.0 LTS et 10.0.1 CD) font partie du périmètre architectural, sans constituer une preuve de compatibilité testée. Avant toute approbation, vérifier la version installée, la syntaxe MQSC, les autorisations et l'adaptateur d'exécution sur chaque système. Voir `docs/MQSC-DEPLOY.md`.
+Audit vérifie la plateforme, le moteur d'exécution, le gestionnaire actif et sa version MQ réelle. Validate ajoute le contrôle syntaxique avec `runmqsc -v`. Apply exige le SHA-256 du plan examiné et une référence d'approbation. Toutes les cibles doivent passer les contrôles préalables avant la première application. Les résultats JSON et les journaux sont enregistrés par cible sous `ansible/reports/mqsc/`.
+
+Le flux numéroté accepte IBM MQ 9.2, 9.3, 9.4 et 10.0, dont 10.0.1 CD. Le champ facultatif `mq_series` du manifeste permet de restreindre cette liste. Les tests utilisent des cibles simulées. Consulter la [référence du flux MQSC](../../docs/MQSC-DEPLOY.md).
 
 ## 7. Administration déclarative des objets
 
@@ -89,7 +96,7 @@ MQSC ne fournit ni transaction globale ni rollback automatique. Préparer les co
 
 Les exemples du laboratoire sont réservés à l'évaluation. La production exige une autorisation IBM de licence, de sécurité, de changement et de compatibilité indépendante. Protéger Vault, les rapports et les fichiers MQSC. Chaque modification doit être revue et associée à une cible et un identifiant précis.
 
-L'adaptateur actuel ne gère pas l'exécution native dans un conteneur, les anciennes versions MQ sans les options requises de `runmqsc`, les verrous distribués ou la garantie d'exécution unique. Le processus de livraison doit gérer approbation, maintenance, sauvegardes et validation par plateforme.
+Coordonner les exécutions, les approbations, les sauvegardes et la reprise via le processus de changement du site. Un échec pendant Apply bloque les cibles suivantes. Des commandes ou cibles précédentes peuvent déjà avoir été modifiées.
 
 ---
 

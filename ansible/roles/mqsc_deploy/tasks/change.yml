@@ -1,0 +1,180 @@
+---
+- name: Initialize evidence
+  ansible.builtin.set_fact:
+    mqsc_evidence: {}
+    mqsc_step: configuration
+
+- name: Process MQSC and persist evidence
+  block:
+    - name: Require a single explicitly selected target and valid settings
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all == [mqsc_change_target]
+          - mqsc_mode in ['audit', 'validate', 'apply']
+          - not ansible_check_mode
+          - mqsc_qmgr is match('^[A-Za-z0-9_.%/][A-Za-z0-9_.%/-]{0,47}$')
+          - mqsc_platform in ['linux', 'aix', 'windows']
+          - mqsc_runtime in ['native', 'podman', 'docker']
+          - mqsc_runtime == 'native' or mqsc_platform == 'linux'
+          - mqsc_runtime == 'native' or mqsc_container | default('') is match('^[A-Za-z0-9][A-Za-z0-9_.-]*$')
+          - mqsc_platform != 'windows' or not (mqsc_become | bool)
+          - mqsc_change_id is match('^C[0-9]{8}$')
+          - mqsc_mode != 'apply' or (mqsc_confirm_apply | bool and mqsc_expected_identity is mapping)
+        quiet: true
+
+    - name: Determine installation root and host probe
+      ansible.builtin.set_fact:
+        mqsc_root: "{{ mqsc_installation | default(mqsc_default_root) }}"
+        mqsc_step: platform
+      vars:
+        mqsc_default_root: >-
+          {{ {'linux': '/opt/mqm', 'aix': '/usr/mqm', 'windows': 'C:\\Program Files\\IBM\\MQ'}[mqsc_platform] }}
+
+    - name: Verify actual host platform
+      ansible.builtin.include_tasks: change-command.yml
+      vars:
+        mqsc_command: "{{ ['cmd.exe', '/c', 'ver'] if mqsc_platform == 'windows' else ['uname', '-s'] }}"
+
+    - name: Require platform and absolute installation path to match
+      ansible.builtin.assert:
+        that:
+          - mqsc_result.rc | default(-1) == 0
+          - >-
+            (mqsc_platform == 'windows' and 'Windows' in mqsc_result.stdout)
+            or (mqsc_platform != 'windows' and mqsc_result.stdout | trim | lower == mqsc_platform)
+          - mqsc_root is match('^[A-Za-z]:[\\\\]' if mqsc_platform == 'windows' else '^/')
+          - mqsc_runmqsc | length == 0
+        fail_msg: Use mqsc_installation for the numbered workflow. Verify the target platform.
+        quiet: true
+
+    - name: Inspect container with the configured engine
+      when: mqsc_runtime != 'native'
+      block:
+        - name: Select runtime probe
+          ansible.builtin.set_fact:
+            mqsc_step: container
+        - name: Inspect actual container
+          ansible.builtin.include_tasks: change-command.yml
+          vars:
+            mqsc_command: "{{ [mqsc_runtime, 'container', 'inspect', mqsc_container] }}"
+        - name: Require successful container inspection
+          ansible.builtin.assert:
+            that: mqsc_result.rc | default(-1) == 0
+            quiet: true
+        - name: Read container state and ID
+          ansible.builtin.set_fact:
+            mqsc_container_info: "{{ (mqsc_result.stdout | from_json) | first }}"
+          no_log: true
+        - name: Require a running container
+          ansible.builtin.assert:
+            that:
+              - mqsc_container_info.State.Running | bool
+              - mqsc_container_info.Id is match('^[a-f0-9]{64}$')
+            quiet: true
+
+    - name: Select MQ binaries and execution context
+      ansible.builtin.set_fact:
+        mqsc_prefix: "{{ [] if mqsc_runtime == 'native' else [mqsc_runtime, 'exec', '-i', mqsc_container_info.Id] }}"
+        mqsc_bin: >-
+          {{ mqsc_root ~ ('\\bin\\' if mqsc_platform == 'windows' else '/bin/') }}
+        mqsc_suffix: "{{ '.exe' if mqsc_platform == 'windows' else '' }}"
+        mqsc_step: discovery
+
+    - name: Discover queue manager installation and status
+      ansible.builtin.include_tasks: change-command.yml
+      vars:
+        mqsc_command: "{{ mqsc_prefix + [mqsc_bin ~ 'dspmq' ~ mqsc_suffix, '-n', '-m', mqsc_qmgr, '-o', 'installation', '-o', 'status'] }}"
+
+    - name: Capture discovery output
+      ansible.builtin.set_fact:
+        mqsc_evidence: "{{ {'discovery': {'rc': mqsc_result.rc | default(-1), 'stdout': mqsc_result.stdout | default(''), 'stderr': mqsc_result.stderr | default('')}} }}"
+
+    - name: Parse reported installation and version
+      ansible.builtin.set_fact:
+        mqsc_paths: >-
+          {{ mqsc_evidence.discovery.stdout | regex_findall('INSTPATH[(]([^\r\n]+?)[)]\s+INSTVER[(]') }}
+        mqsc_versions: "{{ mqsc_evidence.discovery.stdout | regex_findall('INSTVER[(]([0-9]+[.][0-9]+[.][0-9]+[.][0-9]+)[)]') }}"
+
+    - name: Require the expected running queue manager and supported installation
+      ansible.builtin.assert:
+        that:
+          - mqsc_evidence.discovery.rc in [0, 5]
+          - mqsc_evidence.discovery.stdout | regex_findall('QMNAME[(]([^()]+)[)]') == [mqsc_qmgr]
+          - "'STATUS(Running)' in mqsc_evidence.discovery.stdout"
+          - mqsc_paths | length == 1
+          - (mqsc_paths[0] | lower == mqsc_root | lower) if mqsc_platform == 'windows' else (mqsc_paths[0] == mqsc_root)
+          - mqsc_versions | length == 1
+          - mqsc_versions[0] is match('^(9[.][234]|10[.]0)[.]')
+          - mqsc_versions[0].split('.')[:2] | join('.') in mqsc_allowed_series
+        quiet: true
+
+    - name: Record discovered target identity
+      ansible.builtin.set_fact:
+        mqsc_identity:
+          qmgr: "{{ mqsc_qmgr }}"
+          host: "{{ ansible_host | default(inventory_hostname) }}"
+          platform: "{{ mqsc_platform }}"
+          runtime: "{{ mqsc_runtime }}"
+          container_id: "{{ mqsc_container_info.Id | default('') }}"
+          installation: "{{ mqsc_paths[0] }}"
+          version: "{{ mqsc_versions[0] }}"
+        mqsc_step: connection
+
+    - name: Check live MQ connection with a read-only command
+      ansible.builtin.include_tasks: change-runmqsc.yml
+      vars:
+        mqsc_arguments: []
+        mqsc_input: "DISPLAY QMGR VERSION\n"
+
+    - name: Require the live MQ version to match the associated installation
+      ansible.builtin.assert:
+        that:
+          - >-
+            mqsc_evidence.connection.stdout | regex_findall('VERSION[(]([0-9]{8})[)]')
+            == ['%02d%02d%02d%02d' | format(*(mqsc_identity.version.split('.') | map('int') | list))]
+        quiet: true
+
+    - name: Validate and optionally apply the numbered change
+      when: mqsc_mode != 'audit'
+      block:
+        - name: Check the target still matches the preflight evidence
+          ansible.builtin.assert:
+            that: mqsc_mode != 'apply' or mqsc_identity == mqsc_expected_identity
+            quiet: true
+
+        - name: Select syntax verification
+          ansible.builtin.set_fact:
+            mqsc_step: validate
+
+        - name: Verify syntax without executing the change
+          ansible.builtin.include_tasks: change-runmqsc.yml
+          vars:
+            mqsc_arguments: ['-v']
+            mqsc_input: "{{ lookup('ansible.builtin.file', mqsc_source, rstrip=false) }}"
+
+        - name: Apply approved and verified MQSC
+          when: mqsc_mode == 'apply'
+          block:
+            - name: Mark start of the apply phase
+              ansible.builtin.set_fact:
+                mqsc_step: apply
+
+            - name: Execute MQSC on the queue manager
+              ansible.builtin.include_tasks: change-runmqsc.yml
+              vars:
+                mqsc_arguments: []
+                mqsc_input: "{{ lookup('ansible.builtin.file', mqsc_source, rstrip=false) }}"
+
+    - name: Mark successful execution
+      ansible.builtin.set_fact:
+        mqsc_succeeded: true
+
+  always:
+    - name: Write protected evidence on the controller
+      ansible.builtin.copy:
+        dest: "{{ mqsc_phase_report }}"
+        content: "{{ {'success': mqsc_succeeded | default(false), 'step': mqsc_step, 'identity': mqsc_identity | default({}), 'commands': mqsc_evidence} | to_nice_json }}\n"
+        mode: '0600'
+      delegate_to: localhost
+      become: false
+      no_log: true

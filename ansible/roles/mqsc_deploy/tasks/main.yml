@@ -40,7 +40,8 @@
     mqsc_remote_file: "{{ (mqsc_windows_stage_dir ~ '\\' if mqsc_platform == 'windows' else mqsc_posix_stage_dir ~ '/') ~ mqsc_change_id ~ '.mqsc' }}"
 
 - name: Execute platform-specific MQSC workflow
-  ansible.builtin.include_tasks: "{{ 'windows.yml' if mqsc_platform == 'windows' else 'posix.yml' }}"
+  ansible.builtin.include_tasks:
+    file: "{{ 'windows.yml' if mqsc_platform == 'windows' else 'posix.yml' }}"
 
 - name: Ensure local evidence directory exists
   ansible.builtin.file:

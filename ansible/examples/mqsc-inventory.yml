@@ -9,7 +9,6 @@ all:
           ansible_user: mqdeploy
           mqsc_platform: linux
           mqsc_qmgr: QM01
-          mqsc_runmqsc: /opt/mqm/bin/runmqsc
           mqsc_become: true
           mqsc_become_user: mqm
         aix-mq:
@@ -17,7 +16,6 @@ all:
           ansible_user: mqdeploy
           mqsc_platform: aix
           mqsc_qmgr: QM02
-          mqsc_runmqsc: /usr/mqm/bin/runmqsc
           mqsc_become: true
           mqsc_become_user: mqm
         windows-mq:
@@ -26,4 +24,15 @@ all:
           ansible_user: MQDEPLOY
           mqsc_platform: windows
           mqsc_qmgr: QM03
-          mqsc_runmqsc: 'C:\Program Files\IBM\MQ\bin\runmqsc.exe'
+        podman-mq:
+          ansible_host: podman-mq.example.net
+          ansible_user: mqdeploy
+          mqsc_qmgr: BERGENLAB
+          mqsc_runtime: podman
+          mqsc_container: bergen-mq-lab
+        docker-mq:
+          ansible_host: docker-mq.example.net
+          ansible_user: mqdeploy
+          mqsc_qmgr: QM04
+          mqsc_runtime: docker
+          mqsc_container: mq-lab

@@ -1,0 +1,29 @@
+name: MQSC workflow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: |
+          python -m pip install -r requirements.txt pytest
+          ansible-galaxy collection install -r requirements.yml
+      - name: Check standalone playbook syntax
+        run: |
+          ansible-playbook -i ansible/examples/mqsc-inventory.yml ansible/playbooks/mqsc-deploy.yml --syntax-check
+          ansible-playbook -i ansible/examples/mqsc-inventory.yml ansible/playbooks/mqsc-change.yml --syntax-check
+      - name: Run offline suite
+        run: python -m pytest -q

@@ -1,0 +1,19 @@
+---
+- name: Invoke installation's runmqsc
+  ansible.builtin.include_tasks: change-command.yml
+  vars:
+    mqsc_command: "{{ mqsc_prefix + [mqsc_bin ~ 'runmqsc' ~ mqsc_suffix] + mqsc_arguments + [mqsc_qmgr] }}"
+
+- name: Preserve runmqsc evidence
+  ansible.builtin.set_fact:
+    mqsc_evidence: "{{ mqsc_evidence | combine({mqsc_step: {'rc': mqsc_result.rc | default(-1), 'stdout': mqsc_result.stdout | default(''), 'stderr': mqsc_result.stderr | default('')}}) }}"
+  no_log: true
+
+- name: Reject failed or incomplete runmqsc invocations
+  ansible.builtin.assert:
+    that:
+      - mqsc_result.rc | default(-1) == 0
+      - not ((mqsc_result.stdout ~ '\n' ~ mqsc_result.stderr) is search('AMQ[0-9]{4}[ES]([^A-Za-z0-9_]|$)'))
+      - mqsc_step != 'connection' or mqsc_result.stdout is search('(?m)^\s*QMNAME\(' ~ (mqsc_qmgr | regex_escape) ~ '\)')
+    fail_msg: Review the protected MQSC evidence.
+    quiet: true

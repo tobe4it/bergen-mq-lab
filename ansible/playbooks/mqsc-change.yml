@@ -1,0 +1,9 @@
+---
+- name: Process one target of a numbered MQSC change
+  hosts: mqsc_targets
+  gather_facts: false
+  tasks:
+    - name: Run numbered MQSC workflow
+      ansible.builtin.include_role:
+        name: mqsc_deploy
+        tasks_from: change

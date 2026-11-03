@@ -13,3 +13,4 @@ mqsc_report_dir: "{{ playbook_dir }}/../reports/mqsc"
 # mqsc_become_user=mqm for Unix hosts where needed.
 mqsc_become: false
 mqsc_become_user: mqm
+mqsc_runtime: native            # numbered workflow: native | podman | docker

@@ -1,0 +1,29 @@
+---
+- name: Invoke command on GNU/Linux or AIX
+  ansible.builtin.command:
+    argv: "{{ mqsc_command }}"
+    stdin: "{{ mqsc_input | default(omit) }}"
+    stdin_add_newline: false
+    expand_argument_vars: false
+  become: "{{ mqsc_become | bool }}"
+  become_user: "{{ mqsc_become_user }}"
+  register: mqsc_posix_result
+  changed_when: mqsc_step == 'apply'
+  failed_when: false
+  no_log: true
+  when: mqsc_platform != 'windows'
+
+- name: Invoke command on Windows
+  ansible.windows.win_command:
+    argv: "{{ mqsc_command }}"
+    stdin: "{{ mqsc_input | default(omit) }}"
+  register: mqsc_windows_result
+  changed_when: mqsc_step == 'apply'
+  failed_when: false
+  no_log: true
+  when: mqsc_platform == 'windows'
+
+- name: Collect command result
+  ansible.builtin.set_fact:
+    mqsc_result: "{{ mqsc_windows_result if mqsc_platform == 'windows' else mqsc_posix_result }}"
+  no_log: true

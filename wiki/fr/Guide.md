@@ -53,6 +53,8 @@ Exécuter `ansible/playbooks/mqsc-deploy.yml` avec `mqsc_mode=audit`, puis `mqsc
 
 `audit` vérifie uniquement l'exécutable ; `validate` utilise `runmqsc -v` pour contrôler la syntaxe, pas les objets ni les droits. MQSC n'est pas transactionnel. Examiner les changements partiels ; pas de rollback automatique, de registre anti-doublon ni de verrou de gestionnaire. Les ACL du répertoire Windows doivent être restreintes localement.
 
+**Versions IBM MQ ciblées :** IBM MQ 9.2, 9.3, 9.4 et 10.0 (y compris MQ 10.0 LTS et 10.0.1 CD) font partie du périmètre architectural, sans constituer une preuve de compatibilité testée. Avant toute approbation, vérifier la version installée, la syntaxe MQSC, les autorisations et l'adaptateur d'exécution sur chaque système. Voir `docs/MQSC-DEPLOY.md`.
+
 ## 7. Administration déclarative des objets
 
 Le module `ansible/library/mq_objects.py` compare un ensemble limité d'attributs des files, canaux, topics et namelists avec l'état réel via HTTPS. Les objets absents de la déclaration YAML ne sont pas supprimés. Le mode de vérification et le diff couvrent uniquement ce périmètre.

@@ -1,0 +1,3 @@
+* Example ONLY: use explicit change IDs and target QMGRs.
+DEFINE QLOCAL('BERGEN.DEMO.Q') REPLACE
+ALTER QLOCAL('BERGEN.DEMO.Q') DESCR('Managed via MQSC deployment')

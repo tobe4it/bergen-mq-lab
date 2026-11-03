@@ -91,4 +91,4 @@ Der derzeitige MQSC-Adapter unterstützt keine hostseitige Containerausführung,
 
 ---
 
-Références techniques / Technische Referenzen: [README](../../README.md) · [Lab](../../docs/MQ-LAB.md) · [REST](../../docs/MQ.md) · [MQSC](../../docs/MQSC-DEPLOY.md) · [Audit](../../docs/MQ-AUDIT.md) · [Topology](../../docs/MQ-TOPOLOGY.md).
+Références techniques / Technische Referenzen: [README](https://github.com/tobe4it/bergen-mq-lab/blob/main/README.md) · [Lab](https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/MQ-LAB.md) · [REST](https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/MQ.md) · [MQSC](https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/MQSC-DEPLOY.md) · [Audit](https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/MQ-AUDIT.md) · [Topology](https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/MQ-TOPOLOGY.md).

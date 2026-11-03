@@ -1,0 +1,8 @@
+---
+# Standalone MQSC distribution: no MQ-Lab provisioning or REST dependency.
+- name: Validate and deploy MQSC to existing IBM MQ installations
+  hosts: mqsc_targets
+  gather_facts: false
+  serial: 1
+  roles:
+    - mqsc_deploy

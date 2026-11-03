@@ -57,6 +57,15 @@ BERGEN_MQ_RUN_ANSIBLE_INTEGRATION=1 \
   python3 -m unittest discover -s tests -v
 ```
 
+## Documentation
+
+- [English technical references and maintenance policy](docs/DOCUMENTATION.md)
+- [Multilingual Wiki sources (English / Deutsch / Français)](wiki/Home.md)
+- [Standalone MQSC deployments](docs/MQSC-DEPLOY.md)
+
+The Wiki pages in this repository are versioned sources. Publishing to the
+separate GitHub Wiki remote is a distinct maintainer step; see the policy.
+
 ## Deployment
 
 Start with [the MQ lab guide](docs/MQ-LAB.md) and copy the provided example

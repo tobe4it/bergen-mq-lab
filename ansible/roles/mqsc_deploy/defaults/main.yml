@@ -1,0 +1,15 @@
+---
+mqsc_mode: audit                 # audit | validate | apply
+mqsc_confirm_apply: false
+mqsc_source: ""                  # controller-side path to a .mqsc file
+mqsc_change_id: ""               # unique ID for evidence and remote file
+mqsc_qmgr: ""                    # required target queue manager
+mqsc_platform: linux            # linux | aix | windows
+mqsc_runmqsc: ""                 # optional absolute path, overrides default
+mqsc_posix_stage_dir: /var/tmp/bergen-mqsc
+mqsc_windows_stage_dir: 'C:\ProgramData\BergenMQSC'
+mqsc_report_dir: "{{ playbook_dir }}/../reports/mqsc"
+# Privilege escalation is site-managed: set mqsc_become=true and
+# mqsc_become_user=mqm for Unix hosts where needed.
+mqsc_become: false
+mqsc_become_user: mqm

@@ -53,3 +53,12 @@ set up a separately authorized publishing workflow when these files change.
 - Run `python3 tools/check_documentation.py` before committing.
 - CI checks section parity and local link targets; it does **not** verify
   translation semantics or the health of external web links.
+
+## EU Quick Starts
+
+Twenty-four Quick Start translations are maintained as `wiki/Quick-Start-XX.md`:
+BG, CS, DA, DE, EL, EN, ES, ET, FI, FR, GA, HR, HU, IT, LT, LV, MT, NL, PL,
+PT, RO, SK, SL, SV. Each has six matched sections and the same executable
+examples. CI checks language coverage and command parity, not translation
+quality. Have native speakers review the technical translations before formal
+publication. See [Wiki publication](WIKI-PUBLISH.md).

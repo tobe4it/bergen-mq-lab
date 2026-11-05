@@ -4,6 +4,13 @@ Use this workflow with existing queue managers on native GNU/Linux, AIX and
 Windows, or in GNU/Linux Podman and Docker containers. It requires neither
 MQ provisioning nor the lab's REST API.
 
+## Quick Start in 24 EU languages
+
+The [multilingual Wiki source index](../wiki/Home.md) provides six-step Quick
+Starts for all 24 official EU languages, covering inventory, numbered MQSC files,
+audit, syntax verification, approved apply and reporting. Publication into the
+independent GitHub Wiki is described in [WIKI-PUBLISH.md](WIKI-PUBLISH.md).
+
 ## Inventory and change files
 
 Install the Python and Ansible dependencies from the repository root.

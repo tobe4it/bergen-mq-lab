@@ -60,7 +60,8 @@ BERGEN_MQ_RUN_ANSIBLE_INTEGRATION=1 \
 ## Documentation
 
 - [English technical references and maintenance policy](docs/DOCUMENTATION.md)
-- [Multilingual Wiki sources (English / Deutsch / Français)](wiki/Home.md)
+- [MQSC Quick Starts in 24 EU languages and EN/DE/FR manuals](wiki/Home.md)
+- [GitHub Wiki publication instructions](docs/WIKI-PUBLISH.md)
 - [Standalone MQSC deployments](docs/MQSC-DEPLOY.md)
 
 The Wiki pages in this repository are versioned sources. Publishing to the

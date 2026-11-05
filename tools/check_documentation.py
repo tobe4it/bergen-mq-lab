@@ -13,6 +13,10 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 LANGUAGES = ("en", "de", "fr")
+EU_LANGUAGES = ("BG", "CS", "DA", "DE", "EL", "EN", "ES", "ET", "FI", "FR", "GA", "HR", "HU", "IT", "LT", "LV", "MT", "NL", "PL", "PT", "RO", "SK", "SL", "SV")
+REQUIRED_QUICK_START = ("C00000010", "C00000011", "inventory.mqsc.local.yml",
+    "tools/mqsc_change.py", "--mode validate", "--mode apply",
+    "--approve-sha256", "--approval-ref", "ansible/reports/mqsc/")
 EXPECTED_SECTIONS = 12
 LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)]+)\)")
 HEADING_RE = re.compile(r"^## (\d+)\. ", re.MULTILINE)
@@ -61,6 +65,21 @@ def main() -> int:
             if name not in guide:
                 errors.append(f"wiki/{lang}/Guide.md: missing reference to {name}")
 
+    home = (ROOT / "wiki" / "Home.md").read_text(encoding="utf-8")
+    sidebar = (ROOT / "wiki" / "_Sidebar.md").read_text(encoding="utf-8")
+    for code in EU_LANGUAGES:
+        page = ROOT / "wiki" / f"Quick-Start-{code}.md"
+        if not page.is_file():
+            errors.append(f"Missing Quick Start: {code}")
+            continue
+        content = page.read_text(encoding="utf-8")
+        if [int(x) for x in HEADING_RE.findall(content)] != list(range(1, 7)):
+            errors.append(f"Quick Start {code} must have six numbered sections")
+        for token in REQUIRED_QUICK_START:
+            if token not in content:
+                errors.append(f"Quick Start {code} missing {token}")
+        if f"Quick-Start-{code}" not in home or f"Quick-Start-{code}" not in sidebar:
+            errors.append(f"Quick Start {code} missing navigation")
     for name in ("Home.md", "_Sidebar.md"):
         if not (ROOT / "wiki" / name).is_file():
             errors.append(f"Missing wiki/{name}")

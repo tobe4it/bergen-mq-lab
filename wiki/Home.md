@@ -33,6 +33,6 @@
 - [Deutsches Betriebshandbuch](https://github.com/tobe4it/bergen-mq-lab/wiki/Guide-DE)
 - [Guide d'exploitation français](https://github.com/tobe4it/bergen-mq-lab/wiki/Guide-FR)
 
-The MQ Lab environment is for evaluation. The standalone MQSC workflow targets existing IBM MQ queue managers; it does not install MQ. Actual changes require approved plans. These pages must be published into the **separate GitHub Wiki repository** before the links become live.
+The MQ Lab environment is for evaluation. The standalone MQSC workflow targets existing IBM MQ queue managers; it does not install MQ. Actual changes require approved plans. These source pages are published separately into the **GitHub Wiki repository**; publishing updates is independent of the main repository.
 
 [Canonical technical documentation](https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/MQSC-DEPLOY.md)

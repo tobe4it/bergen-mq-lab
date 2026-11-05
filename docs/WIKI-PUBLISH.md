@@ -28,7 +28,9 @@ shows the staged changes. With `--push`, it commits and pushes the 24
 `Quick-Start-XX.md` language pages, `Home.md`, `_Sidebar.md`, and copies
 the existing long-form `wiki/en/Guide.md`, `wiki/de/Guide.md` and
 `wiki/fr/Guide.md` to uniquely named Wiki pages `Guide-EN.md`, `Guide-DE.md`,
-`Guide-FR.md`. The original sources remain untouched.
+`Guide-FR.md`. The original sources remain untouched. The publisher also rewrites
+source-relative technical-reference links in the long guides to stable
+repository URLs so they resolve after Wiki publication.
 
 Verify all 24 pages, the navigation and three long-form guides on the live Wiki.
 Pushing `main` by itself does not publish Wiki content.

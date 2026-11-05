@@ -15,6 +15,23 @@ fi
 for f in "$ROOT"/wiki/Quick-Start-??.md; do cp "$f" "$WORK/wiki/"; done
 cp "$ROOT/wiki/Home.md" "$ROOT/wiki/_Sidebar.md" "$WORK/wiki/"
 for lang in EN DE FR; do cp "$ROOT/wiki/${lang,,}/Guide.md" "$WORK/wiki/Guide-$lang.md"; done
+# In the main-repository source the long guides reside two directories
+# below docs/. Rewrite these source-relative links for the Wiki root.
+python3 - "$WORK/wiki" <<'PY'
+from pathlib import Path
+import re
+import sys
+root = Path(sys.argv[1])
+for lang in ("EN", "DE", "FR"):
+    page = root / f"Guide-{lang}.md"
+    source = page.read_text(encoding="utf-8")
+    text = re.sub(
+        r"\((?:\.\./){2}docs/([^)]*)\)",
+        lambda match: "(https://github.com/tobe4it/bergen-mq-lab/blob/main/docs/" + match.group(1) + ")",
+        source,
+    )
+    page.write_text(text, encoding="utf-8")
+PY
 cd "$WORK/wiki"
 git add Home.md _Sidebar.md Quick-Start-??.md Guide-EN.md Guide-DE.md Guide-FR.md
 if git diff --cached --quiet; then echo "Wiki already up to date."; exit 0; fi
